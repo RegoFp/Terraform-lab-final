@@ -198,7 +198,7 @@ resource "aws_instance" "instance_1" {
   ami           = "ami-00b9c94ad8bfbd110"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.main_subnet_public_1.id
-  security_groups = [aws_security_group.allow_all_testing.id]
+  vpc_security_group_ids = [aws_security_group.allow_all_testing.id]
   iam_instance_profile = "EC2"
   associate_public_ip_address = true
 
@@ -206,6 +206,25 @@ resource "aws_instance" "instance_1" {
 
   tags = {
     Name = "TEST"
+    ENV = "to-delete"
+    Owner = "IT"
+  }
+
+}
+
+resource "aws_instance" "instance_private_test" {
+  ami           = "ami-00b9c94ad8bfbd110"
+  instance_type = "t2.micro"
+  subnet_id     = aws_subnet.main_subnet_private_1.id
+  vpc_security_group_ids = [aws_security_group.allow_all_testing.id]
+  associate_public_ip_address = true
+  iam_instance_profile = "EC2"
+
+
+  depends_on = [ module.rds ]
+
+  tags = {
+    Name = "TEST_private"
     ENV = "to-delete"
     Owner = "IT"
   }
@@ -257,7 +276,21 @@ resource "aws_route53_record" "db" {
   ttl      = 60
 }
 
+resource "aws_route53_record" "alb_alias" {
+  zone_id = aws_route53_zone.private.zone_id
+  name    = "alb.backend.com"
+  type    = "A"
 
+  alias {
+    name                   = module.alb.dns_name
+    zone_id                = module.alb.zone_id
+    evaluate_target_health = true
+  }
+}
+
+#########
+#  RDS
+#########
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.10.0"  # Make sure to check for the latest version
@@ -297,3 +330,59 @@ module "rds" {
     Name = "database"
   }
 }
+
+#########
+#  ALB
+########
+
+module "alb" {
+  source = "terraform-aws-modules/alb/aws"
+
+  name    = "loadbalancer"
+  vpc_id  = aws_vpc.main.id
+  subnets = [aws_subnet.main_subnet_public_1.id,aws_subnet.main_subnet_public_2.id]
+
+  security_groups =  [aws_security_group.allow_all_testing.id]
+  
+
+   /* security_group_ingress_rules = {
+    all_http = {
+      from_port   = 80
+      to_port     = 80
+      ip_protocol = "tcp"
+      description = "HTTP web traffic"
+      cidr_ipv4   = "0.0.0.0/0"
+    }
+   }
+
+    security_group_egress_rules = {
+     all = {
+      ip_protocol = "-1"
+      cidr_ipv4   = "10.0.0.0/16"
+     }
+  }
+ */
+   listeners = {
+    ex_http = {
+      port     = 80
+      protocol = "HTTP"
+
+      forward = {
+        target_group_key = "ex_asg"
+      }
+    }
+  }
+
+  target_groups = {
+    ex_asg = {
+      name_prefix      = "h1"
+      protocol         = "HTTP"
+      port             = 80
+      target_type      = "instance"
+      target_id        = aws_instance.instance_private_test.id
+    }
+
+    }
+}
+
+
