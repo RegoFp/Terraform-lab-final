@@ -8,6 +8,40 @@ terraform {
   }
 }
 
+########
+# IAM
+#######
+
+# Create an IAM Role
+resource "aws_iam_role" "ec2_ssm" {
+  name = "EC2InstanceSSMRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
+
+
+
+resource "aws_iam_role_policy_attachment" "dev-resources-ssm-policy" {
+role       = aws_iam_role.ec2_ssm.name
+policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "ssm_profile" {
+  name = "ssm_profile"
+  role = aws_iam_role.ec2_ssm.name
+}
+
 #########
 # VPC
 #########
@@ -210,9 +244,9 @@ resource "aws_route_table_association" "private_route_2" {
   route_table_id = aws_route_table.route_table_private_2.id
 }
 
-## Instaces --------
+/* ## Instaces --------
 resource "aws_instance" "instance_1" {
-  ami                         = "ami-00b9c94ad8bfbd110"
+  ami                         = "ami-0503e8ce3eca62d35"
   instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.main_subnet_public_1.id
   vpc_security_group_ids      = [aws_security_group.allow_all_testing.id]
@@ -227,10 +261,10 @@ resource "aws_instance" "instance_1" {
     Owner = "IT"
   }
 
-}
+} 
 
 resource "aws_instance" "instance_private_test" {
-  ami                         = "ami-067ec1e60ce41b2dd"
+  ami                         = "ami-0503e8ce3eca62d35"
   instance_type               = "t2.micro"
   subnet_id                   = aws_subnet.main_subnet_private_1.id
   vpc_security_group_ids      = [aws_security_group.allow_all_testing.id]
@@ -247,6 +281,7 @@ resource "aws_instance" "instance_private_test" {
   }
 
 }
+*/
 
 # Security groups ------
 # Security groups ----------
@@ -374,7 +409,7 @@ module "rds" {
 module "alb" {
   source = "terraform-aws-modules/alb/aws"
 
-  name    = "ALB_Jardinalia"
+  name    = "albjardinalia"
   vpc_id  = aws_vpc.main.id
   subnets = [aws_subnet.main_subnet_public_1.id, aws_subnet.main_subnet_public_2.id]
 
@@ -416,10 +451,23 @@ module "alb" {
       protocol    = "HTTP"
       port        = 80
       target_type = "instance"
-      target_id   = aws_instance.instance_private_test.id
+      
+      create_attachment = false
+      
+      health_check = {
+        path                = "/health/"
+        interval            = 30
+        timeout             = 5
+        healthy_threshold   = 3
+        unhealthy_threshold = 3
+        protocol            = "HTTP"
+
+        matcher = "200"
+
     }
 
   }
+}
 }
 
 #########
@@ -429,7 +477,7 @@ module "alb" {
 module "elasticache" {
   source = "terraform-aws-modules/elasticache/aws"
 
-  cluster_id               = "redis_jardinalia"
+  cluster_id               = "redisjardinalia"
   create_cluster           = true
   create_replication_group = false
 
@@ -462,4 +510,78 @@ module "elasticache" {
     OWNER = "IT"
 
   }
+}
+
+resource "aws_launch_template" "minimal_template" {
+  name_prefix   = "jardinalia_launch_template"
+  description   = "test"
+  
+  # Instance configuration
+  instance_type = "t2.micro"  # Free tier eligible instance type
+  image_id           = "ami-0503e8ce3eca62d35"  # Amazon Linux 2 AMI ID (check for latest ID in your region)
+
+  # Security group to allow SSH
+  vpc_security_group_ids = [aws_security_group.allow_all_testing.id]
+
+  tags = {
+    
+  }
+
+  # Root EBS volume configuration
+  block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      volume_size           = 8     # Minimum disk size to reduce costs
+      delete_on_termination = true  # Auto-delete on instance termination
+      volume_type           = "gp2" # General Purpose SSD (cheapest option)
+    }
+  }
+
+  # user_data = filebase64("${path.module}/example.sh")
+}
+
+#####
+#   ASG
+####
+
+module "asg" {
+  source  = "terraform-aws-modules/autoscaling/aws"
+
+  # Autoscaling group
+  name = "asg-jardinalia"
+
+  min_size                  = 1
+  max_size                  = 1
+  desired_capacity          = 1
+  wait_for_capacity_timeout = 0
+  health_check_type         = "EC2"
+  vpc_zone_identifier       = [aws_subnet.main_subnet_private_1.id, aws_subnet.main_subnet_private_2.id]
+
+  security_groups = [aws_security_group.allow_all_testing.id]
+
+  launch_template_id = aws_launch_template.minimal_template.id
+
+  image_id          = "ami-0503e8ce3eca62d35"
+  instance_type     = "t2.micro"
+  ebs_optimized     = true
+  enable_monitoring = true
+
+  iam_instance_profile_name = aws_iam_instance_profile.ssm_profile.name
+
+    # Traffic source attachment
+  traffic_source_attachments = {
+    ex-alb = {
+      traffic_source_identifier = module.alb.target_groups["ex_asg"].arn
+      traffic_source_type       = "elbv2" # default
+    }
+  }
+
+  tags = {
+    Name  = "ASG_Jardinalia"
+    OWNER = "IT"
+
+  }
+
+
+
 }
