@@ -7,16 +7,18 @@ terraform {
     }
   }
 }
-    
 
-# VPC --------------------------------
+#########
+# VPC
+#########
+
 resource "aws_vpc" "main" {
   cidr_block       = "10.0.0.0/16"
   instance_tenancy = "default"
-  
-  enable_dns_support   = true  # Enable DNS resolution
-  enable_dns_hostnames = true  # Enable DNS hostnames
-  
+
+  enable_dns_support   = true # Enable DNS resolution
+  enable_dns_hostnames = true # Enable DNS hostnames
+
   tags = {
     Name  = "VPC Terraform"
     ENV   = var.env
@@ -44,9 +46,9 @@ resource "aws_subnet" "main_subnet_public_1" {
   availability_zone       = "us-east-1a"
 
   tags = {
-    "Name" = "main_subnet_public_1"
-     ENV   = var.env
-    
+    Name  = "main_subnet_public_1"
+    ENV   = var.env
+    OWNER = "IT"
   }
 }
 
@@ -57,8 +59,9 @@ resource "aws_subnet" "main_subnet_public_2" {
   availability_zone       = "us-east-1b"
 
   tags = {
-    "Name" = "main_subnet_public_2"
+    Name  = "main_subnet_public_2"
     ENV   = var.env
+    Owner = "IT"
   }
 }
 
@@ -69,8 +72,9 @@ resource "aws_subnet" "main_subnet_private_1" {
   availability_zone       = "us-east-1a"
 
   tags = {
-    "Name" = "main_subnet_private_1"
+    Name  = "main_subnet_private_1"
     ENV   = var.env
+    OWNER = "IT"
   }
 }
 
@@ -79,21 +83,22 @@ resource "aws_subnet" "main_subnet_private_2" {
   cidr_block              = "10.0.192.0/18"
   map_public_ip_on_launch = false
   availability_zone       = "us-east-1b"
-  
+
 
   tags = {
-    "Name" = "main_subnet_private_2"
+    Name  = "main_subnet_private_2"
     ENV   = var.env
+    OWNER = "IT"
   }
 }
 
 # Networking -----
 
-    
+
 # NAT
 # Create an Elastic IP for the NAT Gateway
 resource "aws_eip" "nat_eip_public_1" {
-    domain = "vpc"
+  domain = "vpc"
 }
 
 resource "aws_nat_gateway" "NAT_public_1" {
@@ -101,7 +106,9 @@ resource "aws_nat_gateway" "NAT_public_1" {
   subnet_id     = aws_subnet.main_subnet_public_1.id
 
   tags = {
-    Name = "nat public 1"
+    Name  = "nat_to_public 1"
+    ENV   = var.env
+    OWNER = "IT"
   }
 
   depends_on = [aws_internet_gateway.main_igw]
@@ -110,7 +117,7 @@ resource "aws_nat_gateway" "NAT_public_1" {
 
 # Create an Elastic IP for the NAT Gateway
 resource "aws_eip" "nat_eip_public_2" {
-    domain = "vpc"
+  domain = "vpc"
 }
 
 resource "aws_nat_gateway" "NAT_public_2" {
@@ -118,16 +125,20 @@ resource "aws_nat_gateway" "NAT_public_2" {
   subnet_id     = aws_subnet.main_subnet_public_2.id
 
   tags = {
-    Name = "nat public 2"
+    Name  = "nat_to_public_2"
+    ENV   = var.env
+    OWNER = "IT"
   }
 
   depends_on = [aws_internet_gateway.main_igw]
 }
 
 
-# Routing tables
+##### ##
+#  Routing tables
+#######
 
-## Publicas con IGW
+# Publicas con IGW
 
 resource "aws_route_table" "route_table_public" {
   vpc_id = aws_vpc.main.id
@@ -138,7 +149,9 @@ resource "aws_route_table" "route_table_public" {
   }
 
   tags = {
-    Name = "route table public"
+    Name  = "route_table_public"
+    ENV   = var.env
+    OWNER = "IT"
   }
 }
 
@@ -164,7 +177,9 @@ resource "aws_route_table" "route_table_private_1" {
   }
 
   tags = {
-    Name = "route table private 1"
+    Name  = "route_table_private_1"
+    ENV   = var.env
+    OWNER = "IT"
   }
 }
 
@@ -184,7 +199,9 @@ resource "aws_route_table" "route_table_private_2" {
   }
 
   tags = {
-    Name = "route table private 2"
+    Name  = "route_table_to_private 2"
+    ENV   = var.env
+    OWNER = "IT"
   }
 }
 
@@ -195,37 +212,37 @@ resource "aws_route_table_association" "private_route_2" {
 
 ## Instaces --------
 resource "aws_instance" "instance_1" {
-  ami           = "ami-00b9c94ad8bfbd110"
-  instance_type = "t2.micro"
-  subnet_id     = aws_subnet.main_subnet_public_1.id
-  vpc_security_group_ids = [aws_security_group.allow_all_testing.id]
-  iam_instance_profile = "EC2"
+  ami                         = "ami-00b9c94ad8bfbd110"
+  instance_type               = "t2.micro"
+  subnet_id                   = aws_subnet.main_subnet_public_1.id
+  vpc_security_group_ids      = [aws_security_group.allow_all_testing.id]
+  iam_instance_profile        = "EC2"
   associate_public_ip_address = true
 
-  depends_on = [ module.rds ]
+  depends_on = [module.rds]
 
   tags = {
-    Name = "TEST"
-    ENV = "to-delete"
+    Name  = "TEST"
+    ENV   = "to-delete"
     Owner = "IT"
   }
 
 }
 
 resource "aws_instance" "instance_private_test" {
-  ami           = "ami-00b9c94ad8bfbd110"
-  instance_type = "t2.micro"
-  subnet_id     = aws_subnet.main_subnet_private_1.id
-  vpc_security_group_ids = [aws_security_group.allow_all_testing.id]
+  ami                         = "ami-067ec1e60ce41b2dd"
+  instance_type               = "t2.micro"
+  subnet_id                   = aws_subnet.main_subnet_private_1.id
+  vpc_security_group_ids      = [aws_security_group.allow_all_testing.id]
   associate_public_ip_address = true
-  iam_instance_profile = "EC2"
+  iam_instance_profile        = "EC2"
 
 
-  depends_on = [ module.rds ]
+  depends_on = [module.rds]
 
   tags = {
-    Name = "TEST_private"
-    ENV = "to-delete"
+    Name  = "TEST_private"
+    ENV   = "to-delete"
     Owner = "IT"
   }
 
@@ -236,13 +253,13 @@ resource "aws_instance" "instance_private_test" {
 resource "aws_security_group" "allow_all_testing" {
   name        = "allow_all_traffic"
   description = "Security group that allows all inbound and outbound traffic"
-  vpc_id      = aws_vpc.main.id  # Replace with your VPC ID
+  vpc_id      = aws_vpc.main.id # Replace with your VPC ID
 
   # Inbound rule: Allow all inbound traffic
   ingress {
     from_port   = 0
     to_port     = 0
-    protocol    = "-1"   # "-1" means all protocols
+    protocol    = "-1" # "-1" means all protocols
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -259,22 +276,39 @@ resource "aws_security_group" "allow_all_testing" {
   }
 }
 
-## Route 53
+#######
+# Route 53
+########
 resource "aws_route53_zone" "private" {
   name = "backend.com"
 
   vpc {
     vpc_id = aws_vpc.main.id
   }
+
+  tags = {
+    Name  = "R53_Jardinalia"
+    ENV   = var.env
+    OWNER = "IT"
+  }
 }
 
 resource "aws_route53_record" "db" {
   zone_id = aws_route53_zone.private.zone_id
-  name     = "db.backend.com"  # The local DNS name for your database
-  type     = "CNAME"  # CNAME is the correct type for pointing to RDS
-  records   = [split(":", module.rds.db_instance_endpoint)[0]]  # Use the RDS instance endpoint
-  ttl      = 60
+  name    = "db.backend.com"
+  type    = "CNAME"
+  records = [split(":", module.rds.db_instance_endpoint)[0]]
+  ttl     = 60
 }
+
+resource "aws_route53_record" "redis" {
+  zone_id = aws_route53_zone.private.zone_id
+  name    = "redis.backend.com"
+  type    = "CNAME"
+  records = [module.elasticache.cluster_cache_nodes[0].address]
+  ttl     = 60
+}
+
 
 resource "aws_route53_record" "alb_alias" {
   zone_id = aws_route53_zone.private.zone_id
@@ -293,59 +327,62 @@ resource "aws_route53_record" "alb_alias" {
 #########
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
-  version = "6.10.0"  # Make sure to check for the latest version
+  version = "6.10.0" # Make sure to check for the latest version
 
-  identifier         = "jardibase"
-  engine             = "postgres"
-  engine_version     = "14"
-  instance_class     = "db.t4g.micro"
-  allocated_storage  = 20
-  storage_type       = "gp2"
+  identifier        = "jardibase"
+  engine            = "postgres"
+  engine_version    = "14"
+  instance_class    = "db.t4g.micro"
+  allocated_storage = 20
+  storage_type      = "gp2"
 
   family = "postgres14"
 
   manage_master_user_password = false
 
-  db_name               = "jardinalia"     # Initial database name
-  username           = "jardinero"             # Master username
-  password           = "adminadmin"    # Master password
-  publicly_accessible = true
+  db_name                 = "jardinalia" # Initial database name
+  username                = "jardinero"  # Master username
+  password                = "adminadmin" # Master password
+  publicly_accessible     = true
   backup_retention_period = 1
 
   # Subnet group configuration
   create_db_subnet_group = true
-  subnet_ids = [aws_subnet.main_subnet_private_1.id, aws_subnet.main_subnet_private_2.id] # Replace with your actual subnet IDs
+  subnet_ids             = [aws_subnet.main_subnet_private_1.id, aws_subnet.main_subnet_private_2.id] # Replace with your actual subnet IDs
 
   # Security group configuration
-  vpc_security_group_ids = [aws_security_group.allow_all_testing.id]  # Referencing the security group created below
+  vpc_security_group_ids = [aws_security_group.allow_all_testing.id] # Referencing the security group created below
 
   # Additional configuration for cost savings
-  multi_az                  = false
-  auto_minor_version_upgrade = false
-  deletion_protection       = false
+  multi_az                     = false
+  auto_minor_version_upgrade   = false
+  deletion_protection          = false
   performance_insights_enabled = false
 
   # Tags
   tags = {
-    Name = "database"
+    Name  = "DB_Jardinalia"
+    ENV   = var.env
+    OWNER = "IT"
   }
 }
 
 #########
 #  ALB
-########
+#########
 
 module "alb" {
   source = "terraform-aws-modules/alb/aws"
 
-  name    = "loadbalancer"
+  name    = "ALB_Jardinalia"
   vpc_id  = aws_vpc.main.id
-  subnets = [aws_subnet.main_subnet_public_1.id,aws_subnet.main_subnet_public_2.id]
+  subnets = [aws_subnet.main_subnet_public_1.id, aws_subnet.main_subnet_public_2.id]
 
-  security_groups =  [aws_security_group.allow_all_testing.id]
-  
+  security_groups = [aws_security_group.allow_all_testing.id]
 
-   /* security_group_ingress_rules = {
+  enable_deletion_protection = false
+
+  /* security_group_ingress_rules = {
     all_http = {
       from_port   = 80
       to_port     = 80
@@ -362,7 +399,7 @@ module "alb" {
      }
   }
  */
-   listeners = {
+  listeners = {
     ex_http = {
       port     = 80
       protocol = "HTTP"
@@ -375,14 +412,54 @@ module "alb" {
 
   target_groups = {
     ex_asg = {
-      name_prefix      = "h1"
-      protocol         = "HTTP"
-      port             = 80
-      target_type      = "instance"
-      target_id        = aws_instance.instance_private_test.id
+      name_prefix = "h1"
+      protocol    = "HTTP"
+      port        = 80
+      target_type = "instance"
+      target_id   = aws_instance.instance_private_test.id
     }
 
-    }
+  }
 }
 
+#########
+#  Redis
+#########
 
+module "elasticache" {
+  source = "terraform-aws-modules/elasticache/aws"
+
+  cluster_id               = "redis_jardinalia"
+  create_cluster           = true
+  create_replication_group = false
+
+  engine_version = "7.1"
+  node_type      = "cache.t4g.small"
+  # az_mode         = "cross-az"
+
+  apply_immediately = true
+
+  # Security group
+  vpc_id             = aws_vpc.main.id
+  security_group_ids = [aws_security_group.allow_all_testing.id]
+
+  # Subnet Group
+  subnet_ids = [aws_subnet.main_subnet_private_1.id, aws_subnet.main_subnet_private_2.id]
+
+  # Parameter Group
+  create_parameter_group = true
+  parameter_group_family = "redis7"
+  parameters = [
+    {
+      name  = "latency-tracking"
+      value = "yes"
+    }
+  ]
+
+  tags = {
+    Name  = "Redis_Jardinalia"
+    ENV   = var.env
+    OWNER = "IT"
+
+  }
+}
