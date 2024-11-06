@@ -33,13 +33,13 @@ resource "aws_iam_role" "ec2_ssm" {
 
 
 resource "aws_iam_role_policy_attachment" "dev-resources-ssm-policy" {
-role       = aws_iam_role.ec2_ssm.name
-policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  role       = aws_iam_role.ec2_ssm.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 resource "aws_iam_role_policy_attachment" "dev-resources-s3-policy" {
-role       = aws_iam_role.ec2_ssm.name
-policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  role       = aws_iam_role.ec2_ssm.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 resource "aws_iam_instance_profile" "ssm_profile" {
@@ -458,9 +458,9 @@ module "alb" {
       protocol    = "HTTP"
       port        = 80
       target_type = "instance"
-      
+
       create_attachment = false
-      
+
       health_check = {
         path                = "/health/"
         interval            = 30
@@ -471,10 +471,10 @@ module "alb" {
 
         matcher = "200"
 
-    }
+      }
 
+    }
   }
-}
 }
 
 #########
@@ -520,18 +520,19 @@ module "elasticache" {
 }
 
 resource "aws_launch_template" "minimal_template" {
-  name_prefix   = "jardinalia_launch_template"
-  description   = "test"
-  
+  name_prefix     = "jardinalia_launch_template"
+  description     = "test"
+
+
   # Instance configuration
-  instance_type = "t2.micro"  # Free tier eligible instance type
-  image_id           = "ami-0503e8ce3eca62d35"  # Amazon Linux 2 AMI ID (check for latest ID in your region)
+  instance_type = "t2.micro"              # Free tier eligible instance type
+  image_id      = "ami-0503e8ce3eca62d35" # Amazon Linux 2 AMI ID (check for latest ID in your region)
 
   # Security group to allow SSH
   vpc_security_group_ids = [aws_security_group.allow_all_testing.id]
 
   tags = {
-    
+
   }
 
   # Root EBS volume configuration
@@ -544,6 +545,13 @@ resource "aws_launch_template" "minimal_template" {
     }
   }
 
+  user_data = base64encode(<<-EOF
+              #!/bin/bash
+              sudo yum install -y amazon-efs-utils
+              sudo mkdir /efs
+              sudo mount -t efs -o tls fs-0cbb8d407526eef75:/ /efs
+              EOF
+  )
   # user_data = filebase64("${path.module}/example.sh")
 }
 
@@ -552,7 +560,7 @@ resource "aws_launch_template" "minimal_template" {
 ####
 
 module "asg" {
-  source  = "terraform-aws-modules/autoscaling/aws"
+  source = "terraform-aws-modules/autoscaling/aws"
 
   # Autoscaling group
   name = "asg-jardinalia"
@@ -568,6 +576,7 @@ module "asg" {
 
   launch_template_id = aws_launch_template.minimal_template.id
 
+
   image_id          = "ami-0503e8ce3eca62d35"
   instance_type     = "t2.micro"
   ebs_optimized     = true
@@ -575,7 +584,7 @@ module "asg" {
 
   iam_instance_profile_name = aws_iam_instance_profile.ssm_profile.name
 
-    # Traffic source attachment
+  # Traffic source attachment
   traffic_source_attachments = {
     ex-alb = {
       traffic_source_identifier = module.alb.target_groups["ex_asg"].arn
@@ -583,11 +592,20 @@ module "asg" {
     }
   }
 
+
   tags = {
     Name  = "ASG_Jardinalia"
     OWNER = "IT"
 
   }
+
+  user_data = base64encode(<<-EOF
+              #!/bin/bash
+              sudo yum install -y amazon-efs-utils
+              sudo mkdir /efs
+              sudo mount -t efs -o tls fs-0cbb8d407526eef75:/ /efs
+              EOF
+  )
 
 }
 
@@ -614,4 +632,33 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
       }
     ]
   })
+}
+
+#########
+# EFS
+#########
+
+# Create EFS File System
+resource "aws_efs_file_system" "jardinalia_efs" {
+  creation_token = "jardinalia-efs"
+  encrypted      = true
+
+  tags = {
+    Name  = "Jardinalia_EFS"
+    ENV   = var.env
+    OWNER = "IT"
+  }
+}
+
+# Create mount targets in private subnets
+resource "aws_efs_mount_target" "private_1" {
+  file_system_id  = aws_efs_file_system.jardinalia_efs.id
+  subnet_id       = aws_subnet.main_subnet_private_1.id
+  security_groups = [aws_security_group.allow_all_testing.id]
+}
+
+resource "aws_efs_mount_target" "private_2" {
+  file_system_id  = aws_efs_file_system.jardinalia_efs.id
+  subnet_id       = aws_subnet.main_subnet_private_2.id
+  security_groups = [aws_security_group.allow_all_testing.id]
 }
