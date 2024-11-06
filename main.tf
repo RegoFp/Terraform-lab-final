@@ -367,6 +367,7 @@ resource "aws_route53_record" "alb_alias" {
 #########
 #  RDS
 #########
+
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.10.0" # Make sure to check for the latest version
@@ -380,12 +381,16 @@ module "rds" {
 
   family = "postgres14"
 
-  manage_master_user_password = false
+  # manage_master_user_password = false
 
-  db_name                 = "jardinalia" # Initial database name
-  username                = "jardinero"  # Master username
-  password                = "adminadmin" # Master password
-  publicly_accessible     = true
+  snapshot_identifier = "arn:aws:rds:us-east-1:842675980926:snapshot:readysnapshot"
+
+  skip_final_snapshot = true
+
+  #db_name                 = "jardinalia" # Initial database name
+  #username                = "jardinero"  # Master username
+  #password                = "adminadmin" # Master password
+  publicly_accessible     = false
   backup_retention_period = 1
 
   # Subnet group configuration
@@ -408,6 +413,8 @@ module "rds" {
     OWNER = "IT"
   }
 }
+
+
 
 #########
 #  ALB
@@ -576,7 +583,6 @@ module "asg" {
 
   launch_template_id = aws_launch_template.minimal_template.id
 
-
   image_id          = "ami-0503e8ce3eca62d35"
   instance_type     = "t2.micro"
   ebs_optimized     = true
@@ -610,7 +616,7 @@ module "asg" {
 }
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = "jardinalia-bucket" # Choose a unique bucket name.            # Keep it private for lower access fees.
+  bucket = "jardinalia-bucket"
 }
 
 resource "aws_s3_bucket_policy" "bucket_policy" {
