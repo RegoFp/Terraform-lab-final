@@ -37,10 +37,17 @@ role       = aws_iam_role.ec2_ssm.name
 policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+resource "aws_iam_role_policy_attachment" "dev-resources-s3-policy" {
+role       = aws_iam_role.ec2_ssm.name
+policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
 resource "aws_iam_instance_profile" "ssm_profile" {
   name = "ssm_profile"
   role = aws_iam_role.ec2_ssm.name
 }
+
+
 
 #########
 # VPC
@@ -582,6 +589,29 @@ module "asg" {
 
   }
 
+}
 
+resource "aws_s3_bucket" "bucket" {
+  bucket = "jardinalia-bucket" # Choose a unique bucket name.            # Keep it private for lower access fees.
+}
 
+resource "aws_s3_bucket_policy" "bucket_policy" {
+  bucket = aws_s3_bucket.bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = aws_iam_role.ec2_ssm.arn
+        }
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject"
+        ]
+        Resource = "${aws_s3_bucket.bucket.arn}/*"
+      }
+    ]
+  })
 }
