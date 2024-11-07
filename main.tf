@@ -213,7 +213,7 @@ resource "aws_route_table" "route_table_private_1" {
   vpc_id = aws_vpc.main.id
 
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.NAT_public_1.id
   }
 
@@ -235,7 +235,7 @@ resource "aws_route_table" "route_table_private_2" {
   vpc_id = aws_vpc.main.id
 
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.NAT_public_2.id
   }
 
@@ -348,7 +348,17 @@ module "rds" {
   }
 }
 
+# Import existing certificate into ACM
+resource "aws_acm_certificate" "certs" {
+  private_key       = file("Certs/clave.pem")
+  certificate_body  = file("Certs/certificado.pem")
 
+  tags = {
+    Name  = "backend-cert"
+    ENV   = var.env
+    OWNER = "IT"
+  }
+}
 
 #########
 #  ALB
@@ -366,16 +376,26 @@ module "alb" {
   enable_deletion_protection = false
 
   create_security_group = false
-
+  
   listeners = {
     ex_http = {
       port     = 80
       protocol = "HTTP"
+      forward = {
+        target_group_key = "ex_asg"
+      }
+    }
+
+    ex_https = {
+      port            = 443
+      protocol        = "HTTPS"
+      certificate_arn = aws_acm_certificate.certs.arn
 
       forward = {
         target_group_key = "ex_asg"
       }
     }
+
   }
 
   target_groups = {
@@ -461,7 +481,7 @@ module "asg" {
   desired_capacity          = 1
   wait_for_capacity_timeout = 0
   health_check_type         = "EC2"
-  vpc_zone_identifier = [aws_subnet.main_subnet_private_1.id, aws_subnet.main_subnet_private_2.id]
+  vpc_zone_identifier       = [aws_subnet.main_subnet_private_1.id, aws_subnet.main_subnet_private_2.id]
 
   security_groups = [
     aws_security_group.web_server_http_https.id,
@@ -492,7 +512,7 @@ module "asg" {
 
   }
 
- user_data = base64encode(<<-EOF
+  user_data = base64encode(<<-EOF
               #!/bin/bash
               sudo yum install -y amazon-efs-utils
               sudo mkdir /efs

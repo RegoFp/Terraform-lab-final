@@ -4,7 +4,7 @@
 resource "aws_security_group" "ALB_allow_http_https" {
   name        = "ALB_allow_http_https"
   description = "Security group to allow all HTTP and HTTPS traffic"
-  vpc_id      = aws_vpc.main.id  // Replace with your VPC ID
+  vpc_id      = aws_vpc.main.id // Replace with your VPC ID
 
   ingress {
     description = "Allow HTTP traffic"
@@ -31,8 +31,8 @@ resource "aws_security_group" "ALB_allow_http_https" {
   }
 
   tags = {
-    Name = "ALB_allow_http_https"
-    ENV = var.env
+    Name  = "ALB_allow_http_https"
+    ENV   = var.env
     OWNER = "IT"
 
   }
@@ -42,7 +42,7 @@ resource "aws_security_group" "ALB_allow_http_https" {
 resource "aws_security_group" "RDS_allow_instance_traffic" {
   name        = "rds_allow_instance_traffic"
   description = "Security group to allow traffic from instances to RDS"
-  vpc_id      = aws_vpc.main.id  // Replace with your VPC ID
+  vpc_id      = aws_vpc.main.id // Replace with your VPC ID
 
   ingress {
     description     = "Allow traffic from instances"
@@ -71,7 +71,7 @@ resource "aws_security_group" "RDS_allow_instance_traffic" {
 resource "aws_security_group" "Redis_allow_instance_traffic" {
   name        = "Redis_allow_instance_traffic"
   description = "Security group to allow traffic from instances to ElastiCache"
-  vpc_id      = aws_vpc.main.id  // Replace with your VPC ID
+  vpc_id      = aws_vpc.main.id // Replace with your VPC ID
 
   ingress {
     description     = "Allow traffic from instances"
