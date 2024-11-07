@@ -214,7 +214,7 @@ resource "aws_route_table" "route_table_private_1" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.NAT_public_1.id
+    nat_gateway_id = aws_nat_gateway.NAT_public_1.id
   }
 
   tags = {
@@ -236,7 +236,7 @@ resource "aws_route_table" "route_table_private_2" {
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.NAT_public_2.id
+    nat_gateway_id = aws_nat_gateway.NAT_public_2.id
   }
 
   tags = {
@@ -251,72 +251,6 @@ resource "aws_route_table_association" "private_route_2" {
   route_table_id = aws_route_table.route_table_private_2.id
 }
 
-/* ## Instaces --------
-resource "aws_instance" "instance_1" {
-  ami                         = "ami-0503e8ce3eca62d35"
-  instance_type               = "t2.micro"
-  subnet_id                   = aws_subnet.main_subnet_public_1.id
-  vpc_security_group_ids      = [aws_security_group.allow_all_testing.id]
-  iam_instance_profile        = "EC2"
-  associate_public_ip_address = true
-
-  depends_on = [module.rds]
-
-  tags = {
-    Name  = "TEST"
-    ENV   = "to-delete"
-    Owner = "IT"
-  }
-
-} 
-
-resource "aws_instance" "instance_private_test" {
-  ami                         = "ami-0503e8ce3eca62d35"
-  instance_type               = "t2.micro"
-  subnet_id                   = aws_subnet.main_subnet_private_1.id
-  vpc_security_group_ids      = [aws_security_group.allow_all_testing.id]
-  associate_public_ip_address = true
-  iam_instance_profile        = "EC2"
-
-
-  depends_on = [module.rds]
-
-  tags = {
-    Name  = "TEST_private"
-    ENV   = "to-delete"
-    Owner = "IT"
-  }
-
-}
-*/
-
-# Security groups ------
-# Security groups ----------
-resource "aws_security_group" "allow_all_testing" {
-  name        = "allow_all_traffic"
-  description = "Security group that allows all inbound and outbound traffic"
-  vpc_id      = aws_vpc.main.id # Replace with your VPC ID
-
-  # Inbound rule: Allow all inbound traffic
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1" # "-1" means all protocols
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Outbound rule: Allow all outbound traffic
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "Allow All Traffic"
-  }
-}
 
 #######
 # Route 53
@@ -398,7 +332,7 @@ module "rds" {
   subnet_ids             = [aws_subnet.main_subnet_private_1.id, aws_subnet.main_subnet_private_2.id] # Replace with your actual subnet IDs
 
   # Security group configuration
-  vpc_security_group_ids = [aws_security_group.allow_all_testing.id] # Referencing the security group created below
+  vpc_security_group_ids = [aws_security_group.RDS_allow_instance_traffic.id] # Referencing the security group created below
 
   # Additional configuration for cost savings
   multi_az                     = false
@@ -427,27 +361,12 @@ module "alb" {
   vpc_id  = aws_vpc.main.id
   subnets = [aws_subnet.main_subnet_public_1.id, aws_subnet.main_subnet_public_2.id]
 
-  security_groups = [aws_security_group.allow_all_testing.id]
+  security_groups = [aws_security_group.ALB_allow_http_https.id]
 
   enable_deletion_protection = false
 
-  /* security_group_ingress_rules = {
-    all_http = {
-      from_port   = 80
-      to_port     = 80
-      ip_protocol = "tcp"
-      description = "HTTP web traffic"
-      cidr_ipv4   = "0.0.0.0/0"
-    }
-   }
+  create_security_group = false
 
-    security_group_egress_rules = {
-     all = {
-      ip_protocol = "-1"
-      cidr_ipv4   = "10.0.0.0/16"
-     }
-  }
- */
   listeners = {
     ex_http = {
       port     = 80
@@ -503,7 +422,7 @@ module "elasticache" {
 
   # Security group
   vpc_id             = aws_vpc.main.id
-  security_group_ids = [aws_security_group.allow_all_testing.id]
+  security_group_ids = [aws_security_group.Redis_allow_instance_traffic.id]
 
   # Subnet Group
   subnet_ids = [aws_subnet.main_subnet_private_1.id, aws_subnet.main_subnet_private_2.id]
@@ -526,42 +445,6 @@ module "elasticache" {
   }
 }
 
-resource "aws_launch_template" "minimal_template" {
-  name_prefix     = "jardinalia_launch_template"
-  description     = "test"
-
-
-  # Instance configuration
-  instance_type = "t2.micro"              # Free tier eligible instance type
-  image_id      = "ami-067f6f81415920257" # Amazon Linux 2 AMI ID (check for latest ID in your region)
-
-  # Security group to allow SSH
-  vpc_security_group_ids = [aws_security_group.allow_all_testing.id]
-
-  tags = {
-
-  }
-
-  # Root EBS volume configuration
-  block_device_mappings {
-    device_name = "/dev/xvda"
-    ebs {
-      volume_size           = 8     # Minimum disk size to reduce costs
-      delete_on_termination = true  # Auto-delete on instance termination
-      volume_type           = "gp2" # General Purpose SSD (cheapest option)
-    }
-  }
-
-
-  user_data = base64encode(<<-EOF
-              #!/bin/bash
-              sudo yum install -y amazon-efs-utils
-              sudo mkdir /efs
-              sudo mount -t efs -o tls ${aws_efs_file_system.jardinalia_efs.id}:/ /efs
-              EOF
-  )
-  # user_data = filebase64("${path.module}/example.sh")
-}
 
 #####
 #   ASG
@@ -578,11 +461,14 @@ module "asg" {
   desired_capacity          = 1
   wait_for_capacity_timeout = 0
   health_check_type         = "EC2"
-  vpc_zone_identifier       = [aws_subnet.main_subnet_private_1.id, aws_subnet.main_subnet_private_2.id]
+  vpc_zone_identifier = [aws_subnet.main_subnet_private_1.id, aws_subnet.main_subnet_private_2.id]
 
-  security_groups = [aws_security_group.allow_all_testing.id]
-
-  launch_template_id = aws_launch_template.minimal_template.id
+  security_groups = [
+    aws_security_group.web_server_http_https.id,
+    aws_security_group.instance_sg_1.id,
+    aws_security_group.ec2_rds_1.id,
+    aws_security_group.ec2_redis_1.id
+  ]
 
   image_id          = "ami-067f6f81415920257"
   instance_type     = "t2.micro"
@@ -650,6 +536,7 @@ resource "aws_efs_file_system" "jardinalia_efs" {
   creation_token = "jardinalia-efs"
   encrypted      = true
 
+
   tags = {
     Name  = "Jardinalia_EFS"
     ENV   = var.env
@@ -661,11 +548,11 @@ resource "aws_efs_file_system" "jardinalia_efs" {
 resource "aws_efs_mount_target" "private_1" {
   file_system_id  = aws_efs_file_system.jardinalia_efs.id
   subnet_id       = aws_subnet.main_subnet_private_1.id
-  security_groups = [aws_security_group.allow_all_testing.id]
+  security_groups = [aws_security_group.EFS_allow_instance_traffic.id]
 }
 
 resource "aws_efs_mount_target" "private_2" {
   file_system_id  = aws_efs_file_system.jardinalia_efs.id
   subnet_id       = aws_subnet.main_subnet_private_2.id
-  security_groups = [aws_security_group.allow_all_testing.id]
+  security_groups = [aws_security_group.EFS_allow_instance_traffic.id]
 }
