@@ -372,7 +372,7 @@ module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.10.0" # Make sure to check for the latest version
 
-  identifier        = "jardibase"
+  identifier        = "rds-jardinalia"
   engine            = "postgres"
   engine_version    = "14"
   instance_class    = "db.t4g.micro"
@@ -381,15 +381,15 @@ module "rds" {
 
   family = "postgres14"
 
-  # manage_master_user_password = false
+  manage_master_user_password = false
 
-  snapshot_identifier = "arn:aws:rds:us-east-1:842675980926:snapshot:readysnapshot"
+  snapshot_identifier = "arn:aws:rds:us-east-1:842675980926:snapshot:ready-jardinalia-2"
 
   skip_final_snapshot = true
 
-  #db_name                 = "jardinalia" # Initial database name
-  #username                = "jardinero"  # Master username
-  #password                = "adminadmin" # Master password
+  # db_name                 = "jardinalia" # Initial database name
+  # username                = "jardinero"  # Master username
+  # password                = "jardinero" # Master password
   publicly_accessible     = false
   backup_retention_period = 1
 
@@ -533,7 +533,7 @@ resource "aws_launch_template" "minimal_template" {
 
   # Instance configuration
   instance_type = "t2.micro"              # Free tier eligible instance type
-  image_id      = "ami-0503e8ce3eca62d35" # Amazon Linux 2 AMI ID (check for latest ID in your region)
+  image_id      = "ami-067f6f81415920257" # Amazon Linux 2 AMI ID (check for latest ID in your region)
 
   # Security group to allow SSH
   vpc_security_group_ids = [aws_security_group.allow_all_testing.id]
@@ -552,11 +552,12 @@ resource "aws_launch_template" "minimal_template" {
     }
   }
 
+
   user_data = base64encode(<<-EOF
               #!/bin/bash
               sudo yum install -y amazon-efs-utils
               sudo mkdir /efs
-              sudo mount -t efs -o tls fs-0cbb8d407526eef75:/ /efs
+              sudo mount -t efs -o tls ${aws_efs_file_system.jardinalia_efs.id}:/ /efs
               EOF
   )
   # user_data = filebase64("${path.module}/example.sh")
@@ -583,7 +584,7 @@ module "asg" {
 
   launch_template_id = aws_launch_template.minimal_template.id
 
-  image_id          = "ami-0503e8ce3eca62d35"
+  image_id          = "ami-067f6f81415920257"
   instance_type     = "t2.micro"
   ebs_optimized     = true
   enable_monitoring = true
@@ -605,18 +606,18 @@ module "asg" {
 
   }
 
-  user_data = base64encode(<<-EOF
+ user_data = base64encode(<<-EOF
               #!/bin/bash
               sudo yum install -y amazon-efs-utils
               sudo mkdir /efs
-              sudo mount -t efs -o tls fs-0cbb8d407526eef75:/ /efs
+              sudo mount -t efs -o tls ${aws_efs_file_system.jardinalia_efs.id}:/ /efs
               EOF
   )
 
 }
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = "jardinalia-bucket"
+  bucket = "jardinalia-bucket-66343156"
 }
 
 resource "aws_s3_bucket_policy" "bucket_policy" {
