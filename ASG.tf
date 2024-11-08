@@ -41,7 +41,7 @@ module "asg" {
 
   tags = {
     Name  = "ASG_Jardinalia"
-    OWNER = "IT"
+    OWNER = var.owner
 
   }
 

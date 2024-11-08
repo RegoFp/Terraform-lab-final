@@ -45,6 +45,6 @@ module "rds" {
   tags = {
     Name  = "DB_Jardinalia"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }

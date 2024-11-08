@@ -19,6 +19,6 @@ module "memcached" {
   tags = {
     Name  = "Memcached_Jardinalia"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }

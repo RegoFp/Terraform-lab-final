@@ -24,16 +24,6 @@ module "alb" {
       }
     }
 
-    ex_https = {
-      port            = 443
-      protocol        = "HTTPS"
-      certificate_arn = aws_acm_certificate.certs.arn
-
-      forward = {
-        target_group_key = "ex_asg"
-      }
-    }
-
   }
 
   target_groups = {

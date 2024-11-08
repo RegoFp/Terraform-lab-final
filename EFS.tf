@@ -6,7 +6,7 @@ resource "aws_efs_file_system" "jardinalia_efs" {
   tags = {
     Name  = "Jardinalia_EFS"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 

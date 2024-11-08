@@ -8,7 +8,7 @@ resource "aws_route53_zone" "private" {
   tags = {
     Name  = "R53_Jardinalia"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 

@@ -31,7 +31,7 @@ module "elasticache" {
   tags = {
     Name  = "Redis_Jardinalia"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
 
   }
 }

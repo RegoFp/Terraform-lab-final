@@ -18,7 +18,7 @@ resource "aws_lb" "nlb-jardinalia" {
   tags = {
     Name          = "nlb-jardinalia"
     ENV          = var.env
-    OWNER         = "IT"
+    OWNER         = var.owner
   }
 }
 
@@ -37,7 +37,7 @@ resource "aws_lb_target_group" "nlb-tg" {
   tags = {
     Name          = "nlb-tg"
     ENV          = var.env
-    OWNER         = "IT"
+    OWNER         = var.owner
   }
 }
 
