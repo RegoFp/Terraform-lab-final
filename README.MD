@@ -2,6 +2,8 @@
 
 ## Arquitectura General
 
+![image](https://github.com/RegoFp/Terraform-lab-final/blob/cf9632634b74f12be0578a56aa617a2edaa60533/resources/diagrama.png?raw=true)
+
 Esta configuración de Terraform implementa una arquitectura en AWS optimizada para alojar instancias de WordPress. Los principales recursos generados incluyen:
 
 
