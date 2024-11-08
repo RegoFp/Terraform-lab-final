@@ -657,7 +657,7 @@ resource "aws_lb" "nlb-jardinalia" {
   internal           = false
   load_balancer_type = "network"
 
-  security_groups    = [aws_security_group.nlb-sg.id]
+  security_groups    = [aws_security_group.nlb_web_traffic.id]
 
   subnet_mapping {
     subnet_id = aws_subnet.main_subnet_public_1.id

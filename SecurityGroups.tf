@@ -8,7 +8,7 @@ resource "aws_security_group" "ALB_allow_http_https" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    security_groups = [aws_security_group.nlb-sg.id]
+    security_groups = [aws_security_group.nlb_web_traffic.id]
   }
 
   ingress {
@@ -16,7 +16,7 @@ resource "aws_security_group" "ALB_allow_http_https" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    security_groups = [aws_security_group.nlb-sg.id]
+    security_groups = [aws_security_group.nlb_web_traffic.id]
   }
 
   egress {
@@ -285,29 +285,37 @@ resource "aws_security_group" "instance_memcached" {
 
 #NLB
 
-resource "aws_security_group" "nlb-sg" {
-  name        = "nlb-sg"
-  description = "Security group for NLB allowing all traffic for testing"
+resource "aws_security_group" "nlb_web_traffic" {
+  name        = "nlb-http-https-access"
+  description = "Security group for NLB allowing HTTP and HTTPS traffic"
   vpc_id      = aws_vpc.main.id
 
-  # Allow all inbound traffic
+  // Allow HTTP traffic
   ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1" # All protocols
-    cidr_blocks = ["0.0.0.0/0"] # Allow from anywhere
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Allow all outbound traffic
+  // Allow HTTPS traffic
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  // Allow all outbound traffic
   egress {
     from_port   = 0
     to_port     = 0
-    protocol    = "-1" # All protocols
-    cidr_blocks = [aws_vpc.main.cidr_block] # Allow to anywhere
+    protocol    = "-1"
+    cidr_blocks = [aws_vpc.main.cidr_block]
   }
 
   tags = {
-    Name  = "nlb-sg"
+    Name  = "nlb-http-https-access"
     ENV   = var.env
     OWNER = "IT"
   }
