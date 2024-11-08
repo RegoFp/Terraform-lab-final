@@ -1,5 +1,5 @@
 resource "aws_vpc" "main" {
-  cidr_block       = "10.0.0.0/16"
+  cidr_block       = var.vpc_cidr
   instance_tenancy = "default"
 
   enable_dns_support   = true
@@ -29,7 +29,7 @@ resource "aws_internet_gateway" "main_igw" {
 
 resource "aws_subnet" "main_subnet_public_1" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.0.0/18"
+  cidr_block              = var.subnet_public_1
   map_public_ip_on_launch = true
   availability_zone       = "us-east-1a"
 
@@ -42,7 +42,7 @@ resource "aws_subnet" "main_subnet_public_1" {
 
 resource "aws_subnet" "main_subnet_public_2" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.64.0/18"
+  cidr_block              = var.subnet_public_2
   map_public_ip_on_launch = true
   availability_zone       = "us-east-1b"
 
@@ -55,7 +55,7 @@ resource "aws_subnet" "main_subnet_public_2" {
 
 resource "aws_subnet" "main_subnet_private_1" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.128.0/18"
+  cidr_block              = var.subnet_private_1
   map_public_ip_on_launch = false
   availability_zone       = "us-east-1a"
 
@@ -68,7 +68,7 @@ resource "aws_subnet" "main_subnet_private_1" {
 
 resource "aws_subnet" "main_subnet_private_2" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.192.0/18"
+  cidr_block              = var.subnet_private_2
   map_public_ip_on_launch = false
   availability_zone       = "us-east-1b"
 
@@ -80,7 +80,7 @@ resource "aws_subnet" "main_subnet_private_2" {
   }
 }
 
-# Create an Elastic IP for the NAT Gateway of the 1st private subnet
+# Elastic IP for the NAT Gateway of the 1st private subnet
 resource "aws_eip" "nat_eip_public_1" {
   domain = "vpc"
 }
@@ -100,7 +100,7 @@ resource "aws_nat_gateway" "NAT_public_1" {
 }
 
 
-# Create an Elastic IP for the NAT Gateway of the 2nd private subnet
+# Elastic IP for the NAT Gateway of the 2nd private subnet
 resource "aws_eip" "nat_eip_public_2" {
   domain = "vpc"
 }

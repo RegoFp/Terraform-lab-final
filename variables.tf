@@ -5,37 +5,34 @@ variable "aws_region" {
 }
 
 
-
-#VPC
+# VPC
 variable "vpc_cidr" {
-  description = "Bloque CIDR para la VPC"
+  description = "CIDR block for the VPC"
   default     = "10.0.0.0/16"
 }
 
-variable "avaliability_zones" {
-  description = "Las zonas de disponibilidad para las subredes"
-  default     = ["us-east-1a", "us-east-1b"]
-
+# Subnets
+variable "subnet_public_1" {
+  description = "CIDR block for the 1st public subnet"
+  default     = "10.0.0.0/18"
 }
 
-#Subnets
-variable "public_subnets" {
-  description = "Lista de bloques CIDR para las subnets publicas"
-  default     = ["10.0.1.0/24", "10.0.2.0/24"]
-
+variable "subnet_public_2" {
+  description = "CIDR block for the 2st public subnet"
+  default     = "10.0.64.0/18"
 }
 
-variable "private_subnets" {
-  description = "Lista de bloques CIDR para las subnets privadas"
-  default     = ["10.0.3.0/24", "10.0.4.0/24"]
-
+variable "subnet_private_1" {
+  description = "CIDR block for the 1st private subnet"
+  default     = "10.0.128.0/18"
 }
 
-variable "enable_nat_gateway" {
-  description = "Variable para habilitar el NAT GW"
-  default     = true
+variable "subnet_private_2" {
+  description = "CIDR block for the 2st private subnet"
+  default     = "10.0.192.0/18"
 }
 
+# Tags
 variable "env" {
   description = "Enviroment name"
   default     = "PROD"
