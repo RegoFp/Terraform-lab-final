@@ -37,3 +37,6 @@ resource "aws_cloudfront_distribution" "wordpress_distribution" {
     cloudfront_default_certificate = true # Use the default CloudFront SSL certificate (for HTTPS only)
   }
 }
+
+# sed -i "s/Servername .*/Servername internal-albjardinalia-1790569059.us-east-1.elb.amazonaws.com/" /etc/httpd/conf.d/ssl.conf 
+# sudo sed -i 's/^ *ServerName .*/    ServerName new_domain_or_IP/' /etc/httpd/conf.d/ssl.conf

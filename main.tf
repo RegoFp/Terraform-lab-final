@@ -277,6 +277,8 @@ resource "aws_route53_record" "db" {
   ttl     = 60
 }
 
+
+
 resource "aws_route53_record" "redis" {
   zone_id = aws_route53_zone.private.zone_id
   name    = "redis.backend.com"
@@ -285,6 +287,13 @@ resource "aws_route53_record" "redis" {
   ttl     = 60
 }
 
+resource "aws_route53_record" "memcached" {
+  zone_id = aws_route53_zone.private.zone_id
+  name    = "memcached.backend.com"
+  type    = "CNAME"
+  records = [module.memcached.cluster_cache_nodes[0].address]
+  ttl     = 60
+}
 
 resource "aws_route53_record" "alb_alias" {
   zone_id = aws_route53_zone.private.zone_id
@@ -347,6 +356,26 @@ module "rds" {
     OWNER = "IT"
   }
 }
+
+#########
+# AWS Secrets Manager
+#########
+
+resource "aws_secretsmanager_secret" "db_credentials" {
+  name        = "db_credenciales"
+  description = "Credenciales para jardinero"
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "db_credentials_version" {
+  secret_id     = aws_secretsmanager_secret.db_credentials.id
+  secret_string = jsonencode({
+    username = "jardinero"
+    password = "jardinero"
+  })
+}
+
+
 
 # Import existing certificate into ACM
 resource "aws_acm_certificate" "certs" {
@@ -487,10 +516,11 @@ module "asg" {
     aws_security_group.web_server_http_https.id,
     aws_security_group.instance_sg_1.id,
     aws_security_group.ec2_rds_1.id,
-    aws_security_group.ec2_redis_1.id
+    aws_security_group.ec2_redis_1.id,
+    aws_security_group.instance_memcached.id
   ]
 
-  image_id          = "ami-067f6f81415920257"
+  image_id          = "ami-0ed928892998f8eea"
   instance_type     = "t2.micro"
   ebs_optimized     = true
   enable_monitoring = true
@@ -576,3 +606,33 @@ resource "aws_efs_mount_target" "private_2" {
   subnet_id       = aws_subnet.main_subnet_private_2.id
   security_groups = [aws_security_group.EFS_allow_instance_traffic.id]
 }
+
+#########
+# ElastiCache Memcached
+#########
+
+module "memcached" {
+  source = "terraform-aws-modules/elasticache/aws"
+
+  cluster_id           = "memcached-jardinalia"
+  create_cluster       = true
+  create_replication_group = false
+
+  engine               = "memcached"
+  node_type            = "cache.t4g.micro" # Choose a cost-effective instance type
+  num_cache_nodes      = 1                   # Number of nodes in the cluster
+  parameter_group_name = "default.memcached1.6" # Default parameter group for Memcached
+
+  # Security group
+  vpc_id             = aws_vpc.main.id
+  subnet_ids = [aws_subnet.main_subnet_private_1.id, aws_subnet.main_subnet_private_2.id]
+  security_group_ids = [aws_security_group.Memcached_allow_instance_traffic.id]
+  
+
+  tags = {
+    Name  = "Memcached_Jardinalia"
+    ENV   = var.env
+    OWNER = "IT"
+  }
+}
+

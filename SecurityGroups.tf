@@ -191,11 +191,12 @@ resource "aws_security_group" "ec2_rds_1" {
   description = "Allow outbound PostgreSQL traffic to RDS"
   vpc_id      = aws_vpc.main.id
 
+
   egress {
     description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -222,6 +223,64 @@ resource "aws_security_group" "ec2_redis_1" {
 
   tags = {
     Name  = "ec2-redis-1"
+    ENV   = var.env
+    OWNER = "IT"
+  }
+}
+
+# Memcached
+resource "aws_security_group" "Memcached_allow_instance_traffic" {
+  name        = "Memcached_allow_instance_traffic"
+  description = "Security group to allow traffic from instances to Memcached"
+  vpc_id      = aws_vpc.main.id // Replace with your VPC ID
+
+  ingress {
+    description     = "Allow traffic from instances"
+    from_port       = 11211
+    to_port         = 11211
+    protocol        = "tcp"
+    security_groups = [aws_security_group.instance_sg_1.id] // Allow traffic from the instance security group
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [aws_vpc.main.cidr_block]
+  }
+
+  tags = {
+    Name  = "Memcached_allow_instance_traffic"
+    ENV   = var.env
+    OWNER = "IT"
+  }
+}
+
+# Security group for Memcached inbound traffic
+resource "aws_security_group" "instance_memcached" {
+  name        = "instance_memcached"
+  description = "Allow inbound traffic from Memcached"
+  vpc_id      = aws_vpc.main.id // Replace with your VPC ID
+
+  ingress {
+    description     = "Allow traffic from Memcached"
+    from_port       = 11211
+    to_port         = 11211
+    protocol        = "tcp"
+    security_groups = [aws_security_group.Memcached_allow_instance_traffic.id] // Allow traffic from the Memcached security group
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name  = "instance_memcached"
     ENV   = var.env
     OWNER = "IT"
   }
