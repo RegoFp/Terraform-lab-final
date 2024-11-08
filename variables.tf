@@ -4,6 +4,8 @@ variable "aws_region" {
 
 }
 
+
+
 #VPC
 variable "vpc_cidr" {
   description = "Bloque CIDR para la VPC"
@@ -38,4 +40,10 @@ variable "env" {
   description = "Enviroment name"
   default     = "PROD"
 
+}
+
+# Owner
+variable "owner" {
+  description = "Owner of the resources"
+  default     = "IT"
 }

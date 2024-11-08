@@ -30,7 +30,7 @@ resource "aws_security_group" "ALB_allow_http_https" {
   tags = {
     Name  = "ALB_allow_http_https"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
 
   }
 }
@@ -60,7 +60,7 @@ resource "aws_security_group" "RDS_allow_instance_traffic" {
   tags = {
     Name  = "rds_allow_instance_traffic"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -89,7 +89,7 @@ resource "aws_security_group" "Redis_allow_instance_traffic" {
   tags = {
     Name  = "Redis_allow_instance_traffic"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -119,7 +119,7 @@ resource "aws_security_group" "EFS_allow_instance_traffic" {
   tags = {
     Name  = "EFS_allow_instance_traffic"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -157,7 +157,7 @@ resource "aws_security_group" "web_server_http_https" {
   tags = {
     Name  = "web-server-http-https"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -178,7 +178,7 @@ resource "aws_security_group" "instance_sg_1" {
   tags = {
     Name  = "instance-sg-1"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -200,7 +200,7 @@ resource "aws_security_group" "ec2_rds_1" {
   tags = {
     Name  = "ec2-rds-1"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -221,7 +221,7 @@ resource "aws_security_group" "ec2_redis_1" {
   tags = {
     Name  = "ec2-redis-1"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -250,7 +250,7 @@ resource "aws_security_group" "Memcached_allow_instance_traffic" {
   tags = {
     Name  = "Memcached_allow_instance_traffic"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -279,7 +279,7 @@ resource "aws_security_group" "instance_memcached" {
   tags = {
     Name  = "instance_memcached"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -317,6 +317,6 @@ resource "aws_security_group" "nlb_web_traffic" {
   tags = {
     Name  = "nlb-http-https-access"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }

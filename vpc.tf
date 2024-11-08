@@ -8,7 +8,7 @@ resource "aws_vpc" "main" {
   tags = {
     Name  = "VPC Terraform"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -20,7 +20,7 @@ resource "aws_internet_gateway" "main_igw" {
   tags = {
     Name  = "IGW_1"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 
 }
@@ -36,7 +36,7 @@ resource "aws_subnet" "main_subnet_public_1" {
   tags = {
     Name  = "main_subnet_public_1"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -49,7 +49,7 @@ resource "aws_subnet" "main_subnet_public_2" {
   tags = {
     Name  = "main_subnet_public_2"
     ENV   = var.env
-    Owner = "IT"
+    Owner = var.owner
   }
 }
 
@@ -62,7 +62,7 @@ resource "aws_subnet" "main_subnet_private_1" {
   tags = {
     Name  = "main_subnet_private_1"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -76,7 +76,7 @@ resource "aws_subnet" "main_subnet_private_2" {
   tags = {
     Name  = "main_subnet_private_2"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -93,7 +93,7 @@ resource "aws_nat_gateway" "NAT_public_1" {
   tags = {
     Name  = "nat_to_public 1"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 
   depends_on = [aws_internet_gateway.main_igw]
@@ -113,7 +113,7 @@ resource "aws_nat_gateway" "NAT_public_2" {
   tags = {
     Name  = "nat_to_public_2"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 
   depends_on = [aws_internet_gateway.main_igw]
@@ -135,7 +135,7 @@ resource "aws_route_table" "route_table_public" {
   tags = {
     Name  = "route_table_public"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -162,7 +162,7 @@ resource "aws_route_table" "route_table_private_1" {
   tags = {
     Name  = "route_table_private_1"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
@@ -183,7 +183,7 @@ resource "aws_route_table" "route_table_private_2" {
   tags = {
     Name  = "route_table_to_private 2"
     ENV   = var.env
-    OWNER = "IT"
+    OWNER = var.owner
   }
 }
 
