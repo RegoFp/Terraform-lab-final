@@ -1,6 +1,6 @@
 resource "aws_cloudfront_distribution" "wordpress_distribution" {
   origin {
-    domain_name = module.alb.dns_name
+    domain_name = aws_lb.nlb-jardinalia.dns_name
     origin_id   = "wordpress-origin"
 
     custom_origin_config {
