@@ -6,8 +6,8 @@ resource "aws_cloudfront_distribution" "wordpress_distribution" {
     custom_origin_config {
       http_port              = 80
       https_port             = 443
-      origin_protocol_policy = "http-only" # Use HTTP (not HTTPS) between CloudFront and ALB
-      origin_ssl_protocols   = ["TLSv1.2"] # Not needed since we're using HTTP
+      origin_protocol_policy = "http-only" 
+      origin_ssl_protocols   = ["TLSv1.2"] 
     }
   }
 
@@ -34,9 +34,6 @@ resource "aws_cloudfront_distribution" "wordpress_distribution" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true # Use the default CloudFront SSL certificate (for HTTPS only)
+    cloudfront_default_certificate = true 
   }
 }
-
-# sed -i "s/Servername .*/Servername internal-albjardinalia-1790569059.us-east-1.elb.amazonaws.com/" /etc/httpd/conf.d/ssl.conf 
-# sudo sed -i 's/^ *ServerName .*/    ServerName new_domain_or_IP/' /etc/httpd/conf.d/ssl.conf

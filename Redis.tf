@@ -3,11 +3,11 @@ module "elasticache" {
 
   cluster_id               = "redisjardinalia"
   create_cluster           = true
-  create_replication_group = false
+  create_replication_group = true
 
   engine_version = "7.1"
   node_type      = "cache.t4g.small"
-  # az_mode         = "cross-az"
+  az_mode        = "cross-az"
 
   apply_immediately = true
 
@@ -27,6 +27,8 @@ module "elasticache" {
       value = "yes"
     }
   ]
+
+  replication_group_id = "redis-replication-group"
 
   tags = {
     Name  = "Redis_Jardinalia"

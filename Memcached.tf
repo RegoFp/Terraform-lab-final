@@ -6,9 +6,9 @@ module "memcached" {
   create_replication_group = false
 
   engine               = "memcached"
-  node_type            = "cache.t4g.micro" # Choose a cost-effective instance type
-  num_cache_nodes      = 1                   # Number of nodes in the cluster
-  parameter_group_name = "default.memcached1.6" # Default parameter group for Memcached
+  node_type            = "cache.t4g.micro" 
+  num_cache_nodes      = 1                   
+  parameter_group_name = "default.memcached1.6" 
 
   # Security group
   vpc_id             = aws_vpc.main.id
